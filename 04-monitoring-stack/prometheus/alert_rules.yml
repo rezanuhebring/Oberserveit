@@ -1,0 +1,180 @@
+groups:
+  - name: host_alerts
+    rules:
+      # Host down alert
+      - alert: HostDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} has been down for more than 5 minutes."
+
+      # High CPU usage
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # Low disk space
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is below 10% on {{ $labels.instance }}"
+
+      # High disk I/O
+      - alert: HighDiskIO
+        expr: rate(node_disk_io_time_seconds_total[5m]) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk I/O on {{ $labels.instance }}"
+          description: "Disk I/O utilization is {{ $value }} on {{ $labels.instance }}"
+
+  - name: service_alerts
+    rules:
+      # Prometheus down
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus has been down for more than 1 minute."
+
+      # Grafana down
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana has been down for more than 2 minutes."
+
+      # Alertmanager down
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alertmanager has been down for more than 1 minute."
+
+  - name: application_alerts
+    rules:
+      # HTTP service down
+      - alert: HttpServiceDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP service {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} is not responding to HTTP requests."
+
+      # Slow HTTP response
+      - alert: SlowHttpResponse
+        expr: probe_duration_seconds > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow HTTP response from {{ $labels.instance }}"
+          description: "HTTP response time is {{ $value }}s for {{ $labels.instance }}"
+
+      # SSL certificate expiry
+      - alert: SslCertificateExpiry
+        expr: probe_ssl_earliest_cert_expiry < time() + 86400 * 30
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+  - name: network_alerts
+    rules:
+      # Interface down
+      - alert: InterfaceDown
+        expr: ifOperStatus == 2
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Network interface {{ $labels.ifDescr }} is down"
+          description: "Interface {{ $labels.ifDescr }} on {{ $labels.instance }} is down."
+
+      # High interface utilization
+      - alert: HighInterfaceUtilization
+        expr: (rate(ifHCInOctets[5m]) + rate(ifHCOutOctets[5m])) / ifHighSpeed * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High network utilization on {{ $labels.ifDescr }}"
+          description: "Interface {{ $labels.ifDescr }} utilization is {{ $value }}%"
+
+      # High error rate
+      - alert: HighInterfaceErrors
+        expr: rate(ifInErrors[5m]) / rate(ifHCInOctets[5m]) * 100 > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.ifDescr }}"
+          description: "Interface {{ $labels.ifDescr }} has {{ $value }}% error rate"
+
+  - name: windows_alerts
+    rules:
+      # Windows service down
+      - alert: WindowsServiceDown
+        expr: windows_service_status{status!="running"} == 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Windows service {{ $labels.name }} is not running"
+          description: "Service {{ $labels.name }} on {{ $labels.instance }} is in status {{ $labels.status }}"
+
+      # High Windows CPU
+      - alert: WindowsHighCpu
+        expr: 100 - (avg by(instance) (irate(windows_cpu_time_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on Windows host {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # Low Windows memory
+      - alert: WindowsLowMemory
+        expr: windows_memory_available_bytes / windows_memory_total_bytes * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low memory on Windows host {{ $labels.instance }}"
+          description: "Available memory is {{ $value }}% on {{ $labels.instance }}"

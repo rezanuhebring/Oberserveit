@@ -1,0 +1,202 @@
+{
+  "repository": {
+    "name": "observeit",
+    "visibility": "public",
+    "description": "A Windows-based, containerized monitoring system providing proactive visibility, alerting, and system health insights using open-source tooling."
+  },
+  "agent_role": "senior_sre_monitoring_architect",
+  "objective": "Design and implement a proactive system monitoring platform with strict compatibility validation and governed repository structure.",
+  "deployment_policy": "Compatibility validation is mandatory before any monitoring system deployment.",
+  "repository_policy": {
+    "enforcement": "All files created by Copilot must follow the defined folder structure.",
+    "violation_action": "Do not create files if the target folder is undefined."
+  },
+  "context": {
+    "hosting_constraint": "No dedicated server available; solution must run on Windows using Docker Desktop (WSL2)",
+    "environment_scope": [
+      "Windows endpoints",
+      "Windows servers",
+      "Linux servers (if any)",
+      "Network devices",
+      "Business-critical applications"
+    ]
+  },
+  "pre_deployment_validation": {
+    "operating_system_check": {
+      "supported": [
+        "Windows 10 64-bit",
+        "Windows 11 64-bit"
+      ],
+      "conditional_support": [
+        "Windows Server 2019+ (Docker Desktop support limited)"
+      ],
+      "unsupported": [
+        "Windows 7",
+        "Windows 8",
+        "32-bit operating systems"
+      ],
+      "action_if_failed": "Abort deployment and report unsupported operating system"
+    },
+    "hardware_check": {
+      "minimum_requirements": {
+        "cpu": "2 cores",
+        "memory": "4 GB RAM",
+        "disk": "20 GB free"
+      },
+      "recommended_requirements": {
+        "cpu": "4 cores",
+        "memory": "8 GB RAM",
+        "disk": "50 GB free"
+      },
+      "action_if_failed": "Abort deployment and recommend hardware upgrade"
+    },
+    "availability_check": {
+      "requirements": [
+        "Device must run 24/7",
+        "Sleep and hibernation must be disabled",
+        "Auto-start on reboot must be enabled"
+      ],
+      "action_if_failed": "Abort deployment and apply Windows power configuration changes"
+    },
+    "network_device_check": {
+      "supported_protocols": [
+        "SNMP v2",
+        "SNMP v3"
+      ],
+      "supported_devices": [
+        "Firewalls",
+        "Routers",
+        "Switches"
+      ],
+      "action_if_failed": "Limit monitoring to host-level metrics and log incompatibility"
+    },
+    "application_check": {
+      "supported_methods": [
+        "HTTP health checks",
+        "Response time monitoring",
+        "Process-level metrics"
+      ],
+      "limitations": [
+        "Legacy applications without health endpoints"
+      ],
+      "action_if_failed": "Fallback to infrastructure-level monitoring"
+    },
+    "security_policy_check": {
+      "requirements": [
+        "Administrator privileges available",
+        "Docker Desktop allowed",
+        "Firewall ports approved (3000, 9090, 9093)",
+        "Antivirus exclusions configured"
+      ],
+      "action_if_failed": "Abort deployment and report required security exceptions"
+    }
+  },
+  "approved_technology_stack": {
+    "container_platform": "Docker Desktop for Windows (WSL2)",
+    "monitoring": "Prometheus",
+    "visualization": "Grafana",
+    "alerting": "Alertmanager",
+    "optional_logging": "Loki"
+  },
+  "folder_structure_rules": {
+    "okr_documents": {
+      "path": "00-okr/",
+      "allowed_files": [
+        "okr-objective-1.md",
+        "success-metrics.md",
+        "scope-and-assumptions.md"
+      ]
+    },
+    "architecture": {
+      "path": "01-architecture/",
+      "allowed_files": [
+        "monitoring-architecture.md",
+        "compatibility-matrix.md",
+        "diagrams/*"
+      ]
+    },
+    "compatibility_validation": {
+      "path": "02-compatibility-validation/",
+      "allowed_files": [
+        "pre-deployment-checklist.md",
+        "compatibility-report-template.md",
+        "scripts/*.ps1"
+      ]
+    },
+    "docker_platform": {
+      "path": "03-docker-platform/",
+      "allowed_files": [
+        "docker-desktop-setup.md",
+        "wsl2-configuration.md",
+        "hardening-checklist.md"
+      ]
+    },
+    "monitoring_stack": {
+      "path": "04-monitoring-stack/",
+      "allowed_files": [
+        "docker-compose.yml",
+        "prometheus/*.yml",
+        "alertmanager/*.yml",
+        "grafana/**",
+        "exporters/*.md"
+      ]
+    },
+    "alerting_and_escalation": {
+      "path": "05-alerting-and-escalation/",
+      "allowed_files": [
+        "alert-strategy.md",
+        "escalation-matrix.md",
+        "notification-channels.md"
+      ]
+    },
+    "dashboards": {
+      "path": "06-dashboards/",
+      "allowed_files": [
+        "*.md",
+        "exports/*.json"
+      ]
+    },
+    "runbooks": {
+      "path": "07-runbooks/",
+      "allowed_files": [
+        "*.md"
+      ]
+    },
+    "security_and_governance": {
+      "path": "08-security-and-governance/",
+      "allowed_files": [
+        "*.md"
+      ]
+    },
+    "operations": {
+      "path": "09-operations/",
+      "allowed_files": [
+        "*.md"
+      ]
+    }
+  },
+  "quality_gates": {
+    "pre_deployment": [
+      "Compatibility validation completed",
+      "Security requirements documented",
+      "Success metrics defined"
+    ],
+    "deployment": [
+      "Docker stack validated",
+      "Alert rules tested",
+      "Dashboards available"
+    ]
+  },
+  "governance": {
+    "version_control": "All files must be committed to Git",
+    "audit_ready": true,
+    "traceability": "Each major document must reference system availability and reliability goals"
+  },
+  "deliverables": [
+    "Compatibility validation report",
+    "Docker Compose configuration",
+    "Alert rules and dashboards",
+    "Operational runbooks",
+    "Monitoring platform documentation"
+  ]
+}

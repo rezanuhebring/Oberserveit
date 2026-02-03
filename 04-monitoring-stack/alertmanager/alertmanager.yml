@@ -1,0 +1,148 @@
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@observeit.com'
+  smtp_auth_username: 'your-email@gmail.com'
+  smtp_auth_password: 'your-app-password'
+  smtp_require_tls: true
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+route:
+  group_by: ['alertname', 'instance', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-email'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-email'
+      continue: true
+    - match:
+        severity: warning
+      receiver: 'warning-email'
+      continue: true
+    - match:
+        team: operations
+      receiver: 'ops-email'
+    - match:
+        team: network
+      receiver: 'network-email'
+
+receivers:
+  - name: 'default-email'
+    email_configs:
+      - to: 'admin@company.com'
+        subject: 'ObserveIt Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Instance: {{ .Labels.instance }}
+          Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+  - name: 'critical-email'
+    email_configs:
+      - to: 'critical-alerts@company.com,manager@company.com'
+        subject: 'CRITICAL: ObserveIt Alert - {{ .GroupLabels.alertname }}'
+        headers:
+          X-Priority: '1'
+        body: |
+          CRITICAL ALERT - IMMEDIATE ATTENTION REQUIRED
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Instance: {{ .Labels.instance }}
+          Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+          Please acknowledge and resolve immediately.
+
+  - name: 'warning-email'
+    email_configs:
+      - to: 'warnings@company.com'
+        subject: 'WARNING: ObserveIt Alert - {{ .GroupLabels.alertname }}'
+        headers:
+          X-Priority: '3'
+        body: |
+          WARNING ALERT - MONITOR CLOSELY
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Instance: {{ .Labels.instance }}
+          Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+  - name: 'ops-email'
+    email_configs:
+      - to: 'operations@company.com'
+        subject: 'Ops Team: {{ .GroupLabels.alertname }}'
+        body: |
+          Operations Team Alert
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Instance: {{ .Labels.instance }}
+          Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+  - name: 'network-email'
+    email_configs:
+      - to: 'network-team@company.com'
+        subject: 'Network Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          Network Team Alert
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Instance: {{ .Labels.instance }}
+          Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+  # Slack notification (optional - requires Slack webhook)
+  - name: 'slack-notifications'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts'
+        title: 'ObserveIt Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Instance: {{ .Labels.instance }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+
+  # Webhook for external integrations (PagerDuty, ServiceNow, etc.)
+  - name: 'webhook'
+    webhook_configs:
+      - url: 'http://external-system.company.com/webhook'
+        http_config:
+          basic_auth:
+            username: 'webhook-user'
+            password: 'webhook-password'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  - source_match:
+      alertname: 'HostDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['instance']
